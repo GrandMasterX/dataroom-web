@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with: { version: 11 }
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The API lives in another repository, so its types cannot be checked at build time the
+      # way they would be in a monorepo. Regenerating from the committed document and
+      # requiring no diff catches the case where someone edits the generated file by hand or
+      # forgets to regenerate after syncing a new document.
+      #
+      # What it deliberately does not catch: the API changing and this repository not having
+      # synced yet. That gap is the price of separate repositories, and it is checked by
+      # running `pnpm api:sync` against a deployed API rather than pretended away here.
+      - name: Check generated API types match the committed document
+        run: |
+          pnpm api:types
+          git diff --exit-code src/lib/api/schema.d.ts || {
+            echo "Generated types are stale — run pnpm api:types and commit the result." >&2
+            exit 1
+          }
+
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm build
+        env:
+          API_URL: http://localhost:4000

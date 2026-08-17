@@ -9,6 +9,8 @@ import { ShareDialog } from '@/components/dialogs/share-dialog';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icons';
 import { ErrorState, Skeleton } from '@/components/ui/states';
+import { SearchInput, MIN_SEARCH_LENGTH } from '@/components/search/search-input';
+import { SearchResults } from '@/components/search/search-results';
 import { UploadDropzone } from '@/components/upload/upload-dropzone';
 import { useChildren, useNode } from '@/lib/api/hooks';
 import { useUploadQueue } from '@/lib/uploads/upload-queue';
@@ -29,6 +31,11 @@ export function Explorer({ nodeId }: { nodeId: string }) {
   const queue = useUploadQueue();
   const filePicker = useRef<HTMLInputElement>(null);
 
+  // Derived during render rather than reset in an effect: when the folder changes the query
+  // is simply no longer the one that was typed, and an effect would render the old results
+  // once before clearing them.
+  const [typed, setTyped] = useState({ nodeId, value: '' });
+  const query = typed.nodeId === nodeId ? typed.value : '';
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [renaming, setRenaming] = useState<Node | null>(null);
   const [moving, setMoving] = useState<Node | null>(null);
@@ -58,6 +65,11 @@ export function Explorer({ nodeId }: { nodeId: string }) {
         <Breadcrumbs trail={breadcrumbs} current={node.name} />
 
         <div className="flex items-center gap-2">
+          <SearchInput
+            key={nodeId}
+            onChange={(value) => setTyped({ nodeId, value })}
+            placeholder={`Search in ${node.name}`}
+          />
           {capabilities.canShare && (
             <Button onClick={() => setSharing(node)}>
               <Icon.Share className="size-4" />
@@ -99,6 +111,9 @@ export function Explorer({ nodeId }: { nodeId: string }) {
         </p>
       )}
 
+      {query.length >= MIN_SEARCH_LENGTH ? (
+        <SearchResults nodeId={node.id} query={query} />
+      ) : (
       <UploadDropzone parentId={node.id} disabled={!capabilities.canUpload}>
         <NodeTable
           capabilities={capabilities}
@@ -128,6 +143,7 @@ export function Explorer({ nodeId }: { nodeId: string }) {
           }
         />
       </UploadDropzone>
+      )}
 
       <CreateFolderDialog
         parentId={node.id}
@@ -136,6 +152,7 @@ export function Explorer({ nodeId }: { nodeId: string }) {
       />
       <RenameDialog node={renaming} onOpenChange={(open) => !open && setRenaming(null)} />
       <MoveDialog
+        key={moving?.id ?? 'move'}
         node={moving}
         rootNodeId={breadcrumbs[0]?.id ?? node.id}
         onOpenChange={(open) => !open && setMoving(null)}

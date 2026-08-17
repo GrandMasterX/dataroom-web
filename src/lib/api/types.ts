@@ -14,6 +14,7 @@ export type Breadcrumb = components['schemas']['BreadcrumbDto'];
 export type Capabilities = components['schemas']['CapabilitiesDto'];
 export type ChildrenPage = components['schemas']['ChildrenPageDto'];
 export type SubtreeStats = components['schemas']['SubtreeStatsDto'];
+export type SearchHit = components['schemas']['SearchHitDto'];
 export type DataRoom = components['schemas']['DataRoomDto'];
 export type User = components['schemas']['UserDto'];
 

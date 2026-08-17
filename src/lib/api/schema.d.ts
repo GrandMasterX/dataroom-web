@@ -152,6 +152,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/nodes/{id}/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Find items by name inside this subtree
+         * @description Scoped to the node it is called on, so a guest searching a shared folder cannot reach anything outside it — the same endpoint serves both without a separate rule.
+         */
+        get: operations["NodesController_search"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/nodes/folders": {
         parameters: {
             query?: never;
@@ -549,6 +569,20 @@ export interface components {
             /** @description Sum of current versions — the logical size */
             totalSizeBytes: number;
         };
+        SearchHitDto: {
+            id: string;
+            dataRoomId: string;
+            /** @enum {string} */
+            type: "FOLDER" | "FILE";
+            name: string;
+            /** Format: date-time */
+            updatedAt: string;
+            sizeBytes?: number | null;
+            mimeType?: string | null;
+            /** @description The folder this result sits in */
+            parentId: string | null;
+            parentName: string | null;
+        };
         CreateFolderDto: {
             parentId: string;
             /** @example 03 Legal */
@@ -938,6 +972,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SubtreeStatsDto"];
+                };
+            };
+        };
+    };
+    NodesController_search: {
+        parameters: {
+            query: {
+                /** @description At least three characters: shorter queries produce no complete trigrams, so the index cannot serve them and every keystroke would scan the room. */
+                q: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchHitDto"][];
                 };
             };
         };

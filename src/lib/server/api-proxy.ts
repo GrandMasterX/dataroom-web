@@ -28,12 +28,32 @@ const FORWARDED_REQUEST_HEADERS = ['content-type', 'x-share-token'];
 const refreshesInFlight = new Map<string, Promise<SessionTokens | null>>();
 
 export async function proxyToApi(request: NextRequest, path: string): Promise<NextResponse> {
-  const accessToken = request.cookies.get(ACCESS_COOKIE)?.value;
   const refreshToken = request.cookies.get(REFRESH_COOKIE)?.value;
+  let accessToken = request.cookies.get(ACCESS_COOKIE)?.value;
   const body = await readBody(request);
 
+  // Refresh before asking rather than after being refused, when the short-lived access
+  // cookie has already expired and only the refresh cookie remains.
+  //
+  // Waiting for a 401 does not work here, and the reason is a collision between two
+  // decisions that are each correct on their own: read endpoints answer 404 rather than 403
+  // so that they never confirm a resource exists, and an expired session makes a request
+  // anonymous rather than invalid. An anonymous read therefore comes back as 404 — a status
+  // this proxy has no business retrying — and the user is told the document no longer
+  // exists when in fact their session simply lapsed.
+  let refreshed: SessionTokens | null = null;
+  if (!accessToken && refreshToken) {
+    refreshed = await refreshSession(refreshToken);
+    accessToken = refreshed?.accessToken;
+  }
+
   const first = await callApi(request, path, body, accessToken);
-  if (first.status !== 401 || !refreshToken) return toNextResponse(first);
+
+  if (first.status !== 401 || !refreshToken) {
+    const response = await toNextResponse(first);
+    if (refreshed) applySession(response, refreshed);
+    return response;
+  }
 
   // The access token expired mid-session. Refresh once, retry once; a second 401 means the
   // session is genuinely over rather than merely stale.

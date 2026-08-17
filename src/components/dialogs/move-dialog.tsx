@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Icon } from '@/components/ui/icons';
@@ -25,18 +25,14 @@ export function MoveDialog({
   rootNodeId: string;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [browsingId, setBrowsingId] = useState(rootNodeId);
+  // Starts where the item currently lives, which is where someone reorganising is most
+  // likely to look. The caller keys this component by node id, so opening it for a different
+  // item mounts it fresh — no effect resetting state after the first render.
+  const [browsingId, setBrowsingId] = useState(node?.parentId ?? rootNodeId);
   const move = useMoveNode();
 
   const current = useNode(node ? browsingId : undefined);
   const folders = useChildren(node ? browsingId : undefined, 'FOLDER');
-
-  useEffect(() => {
-    if (node) {
-      setBrowsingId(node.parentId ?? rootNodeId);
-      move.reset();
-    }
-  }, [node?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const items = (folders.data?.pages ?? []).flatMap((page) => page.items);
   const parentTrail = current.data?.breadcrumbs ?? [];

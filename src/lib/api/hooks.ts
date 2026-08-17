@@ -22,6 +22,7 @@ import type {
   ShareGrant,
   ShareLink,
   SharedLinkContext,
+  SearchHit,
   SharedWithMeItem,
   SubtreeStats,
   UploadResult,
@@ -119,6 +120,18 @@ export function useNodeShares(nodeId: string | undefined, enabled: boolean) {
     queryKey: queryKeys.shares(nodeId ?? ''),
     queryFn: () => api.get<NodeShares>(`nodes/${nodeId}/shares`),
     enabled: Boolean(nodeId) && enabled,
+  });
+}
+
+export function useSearch(nodeId: string | undefined, query: string) {
+  return useQuery({
+    queryKey: queryKeys.search(nodeId ?? '', query),
+    queryFn: () => api.get<SearchHit[]>(`nodes/${nodeId}/search?q=${encodeURIComponent(query)}`),
+    // Below three characters the server rejects the query, so asking would only produce an
+    // error state for something the user has not finished typing.
+    enabled: Boolean(nodeId) && query.length >= 3,
+    // Results are cheap to refetch and go stale as soon as anything is renamed.
+    staleTime: 5_000,
   });
 }
 

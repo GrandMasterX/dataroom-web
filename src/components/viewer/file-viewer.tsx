@@ -116,6 +116,7 @@ export function FileViewer({ nodeId }: { nodeId: string }) {
 
       <RenameDialog node={renaming} onOpenChange={(open) => !open && setRenaming(null)} />
       <MoveDialog
+        key={moving?.id ?? 'move'}
         node={moving}
         rootNodeId={breadcrumbs[0]?.id ?? node.id}
         onOpenChange={(open) => !open && setMoving(null)}
