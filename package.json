@@ -6,10 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "api:sync": "curl -sf ${API_URL:-http://localhost:4000}/api/docs-json -o openapi.json && pnpm api:types",
+    "api:types": "openapi-typescript openapi.json -o src/lib/api/schema.d.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.0",
+    "@radix-ui/react-dialog": "^1.1.23",
+    "@radix-ui/react-dropdown-menu": "^2.1.24",
+    "@radix-ui/react-tooltip": "^1.2.16",
     "@tanstack/react-query": "^5.101.4",
     "clsx": "^2.1.1",
     "lucide-react": "^1.31.0",
@@ -27,6 +33,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
+    "openapi-typescript": "^7.13.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
