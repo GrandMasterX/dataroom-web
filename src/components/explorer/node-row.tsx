@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@/components/ui/icons';
 import { formatBytes, formatRelativeDate } from '@/lib/format';
 import type { Capabilities, Node } from '@/lib/api/types';
+import { useNodeLinks } from './node-links';
 
 export interface NodeRowActions {
   onRename: (node: Node) => void;
@@ -22,18 +23,16 @@ export interface NodeRowActions {
  */
 export function NodeRow({
   node,
-  roomId,
   capabilities,
   actions,
 }: {
   node: Node;
-  roomId: string;
   capabilities: Capabilities;
   actions: NodeRowActions;
 }) {
   const router = useRouter();
-  const href =
-    node.type === 'FOLDER' ? `/d/${roomId}/f/${node.id}` : `/d/${roomId}/file/${node.id}`;
+  const links = useNodeLinks();
+  const href = node.type === 'FOLDER' ? links.folderHref(node.id) : links.fileHref(node.id);
 
   const open = () => router.push(href);
   const hasMenu =

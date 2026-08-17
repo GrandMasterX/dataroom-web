@@ -13,13 +13,11 @@ import { NodeRow, type NodeRowActions } from './node-row';
  * chain, three of the four states render nothing, which a user reads as a broken page.
  */
 export function NodeTable({
-  roomId,
   capabilities,
   actions,
   query,
   emptyAction,
 }: {
-  roomId: string;
   capabilities: Capabilities;
   actions: NodeRowActions;
   query: {
@@ -86,13 +84,7 @@ export function NodeTable({
 
       <ul className="divide-y divide-border">
         {items.map((node) => (
-          <NodeRow
-            key={node.id}
-            node={node}
-            roomId={roomId}
-            capabilities={capabilities}
-            actions={actions}
-          />
+          <NodeRow key={node.id} node={node} capabilities={capabilities} actions={actions} />
         ))}
       </ul>
 

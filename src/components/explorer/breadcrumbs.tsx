@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Icon } from '@/components/ui/icons';
 import type { Breadcrumb } from '@/lib/api/types';
+import { useNodeLinks } from './node-links';
 
 /**
  * The trail above the listing.
@@ -11,21 +12,15 @@ import type { Breadcrumb } from '@/lib/api/types';
  * component renders whatever it receives without deciding what may be shown — that decision
  * belongs to the API, where it cannot be bypassed.
  */
-export function Breadcrumbs({
-  roomId,
-  trail,
-  current,
-}: {
-  roomId: string;
-  trail: Breadcrumb[];
-  current: string;
-}) {
+export function Breadcrumbs({ trail, current }: { trail: Breadcrumb[]; current: string }) {
+  const links = useNodeLinks();
+
   return (
     <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1 text-sm">
       {trail.map((crumb) => (
         <span key={crumb.id} className="flex min-w-0 items-center gap-1">
           <Link
-            href={`/d/${roomId}/f/${crumb.id}`}
+            href={links.folderHref(crumb.id)}
             className="max-w-[12rem] truncate rounded px-1 text-muted hover:text-foreground hover:underline"
           >
             {crumb.name}

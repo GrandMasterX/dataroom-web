@@ -9,7 +9,7 @@
     "lint": "eslint",
     "api:sync": "curl -sf ${API_URL:-http://localhost:4000}/api/docs-json -o openapi.json && pnpm api:types",
     "api:types": "openapi-typescript openapi.json -o src/lib/api/schema.d.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.0",

@@ -23,7 +23,7 @@ import { NodeTable } from './node-table';
  * reports, which decide what is rendered — so a guest is never shown a control that would be
  * refused, and there is no second read-only copy of this screen to keep in step.
  */
-export function Explorer({ roomId, nodeId }: { roomId: string; nodeId: string }) {
+export function Explorer({ nodeId }: { nodeId: string }) {
   const detail = useNode(nodeId);
   const children = useChildren(nodeId);
   const queue = useUploadQueue();
@@ -55,7 +55,7 @@ export function Explorer({ roomId, nodeId }: { roomId: string; nodeId: string })
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Breadcrumbs roomId={roomId} trail={breadcrumbs} current={node.name} />
+        <Breadcrumbs trail={breadcrumbs} current={node.name} />
 
         <div className="flex items-center gap-2">
           {capabilities.canShare && (
@@ -101,7 +101,6 @@ export function Explorer({ roomId, nodeId }: { roomId: string; nodeId: string })
 
       <UploadDropzone parentId={node.id} disabled={!capabilities.canUpload}>
         <NodeTable
-          roomId={roomId}
           capabilities={capabilities}
           actions={{
             onRename: setRenaming,
