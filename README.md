@@ -1,23 +1,40 @@
 # Data Room — web
 
-The interface: browsing folders, uploading documents, viewing them, and sharing them.
+The interface to a virtual data room: browsing folders, uploading documents with real
+progress, viewing them, and sharing a room, a folder or a single file read-only.
 
-The design decisions, the data model and the "how it scales" notes live in the
-**[dataroom-api README](https://github.com/GrandMasterX/dataroom-api)**, which is the entry
-point for this project. This file covers what is specific to the frontend.
+Next.js 16 (App Router), React 19, Tailwind 4 and TanStack Query, plus a small
+backend-for-frontend proxy that keeps sessions in first-party httpOnly cookies. This README
+covers the frontend; the data model and the access rules it renders belong to the API and are
+documented there.
 
-| Repository | Contents |
+Related repositories, each documented on its own: the API in
+[dataroom-api](https://github.com/GrandMasterX/dataroom-api) and the AWS infrastructure in
+[dataroom-infra](https://github.com/GrandMasterX/dataroom-infra).
+
+## Live instance
+
+**https://dataroom-web-rosy.vercel.app**
+
+Two demo accounts, password `Password123!` for both; the sign-in page also has a **Use the
+demo account** button, so nothing needs typing.
+
+| Account | What it shows |
 | --- | --- |
-| [dataroom-api](https://github.com/GrandMasterX/dataroom-api) | NestJS, PostgreSQL, S3 — and the main README |
-| **dataroom-web** (this one) | Next.js 16, React 19, Tailwind 4, TanStack Query |
-| [dataroom-infra](https://github.com/GrandMasterX/dataroom-infra) | Terraform |
+| `owner@demo.dataroom` | Owns a room: the whole tree, uploads, sharing controls, version history. |
+| `viewer@demo.dataroom` | The receiving end of a per-person grant — read-only, one folder. |
 
-Deployed at **https://dataroom-web-rosy.vercel.app** — demo accounts and the public sample
-link are listed in the main README.
+A [public link](https://dataroom-web-rosy.vercel.app/s/5907cbe5bd994de08fba2e5d0cdd6dc4)
+needs no account at all and is the fastest thing to try.
+
+The first request after the database has been idle takes about half a second longer than a
+warm one — free-tier compute waking up, not the code.
 
 ## Running it
 
-The API must be running first (see its README — one `docker compose up -d` and two commands).
+The API has to be running first: clone
+[dataroom-api](https://github.com/GrandMasterX/dataroom-api) and follow its README, which
+brings up PostgreSQL and MinIO in Docker and seeds the demo data.
 
 ```bash
 pnpm install
@@ -88,3 +105,36 @@ same upload rather than repeating it.
 
 Folders are addressed by id rather than by path, so renaming anything never breaks a link
 someone bookmarked or pasted into a chat.
+
+## Response headers
+
+Set in `next.config.ts` for every page this app serves. The API sets its own through helmet,
+but those protect API responses; the HTML a person actually browses comes from here.
+
+`Referrer-Policy: no-referrer` is the one that matters most for this product rather than in
+general: a document opens from a presigned storage URL that carries its own signature, and a
+referrer header is the classic way such a URL ends up in someone else's logs.
+
+There is deliberately no Content-Security-Policy. An honest one here would have to allow
+`'unsafe-inline'` for scripts — this app runs no nonce pipeline — and open `frame-src` and
+`connect-src` to the storage origin so the viewer and the direct upload keep working. That
+policy would block almost nothing while reading as protection. What the viewer's safety
+actually rests on is described in `src/components/viewer/pdf-frame.tsx`: only
+`application/pdf` is ever served inline, the content type is pinned when the URL is signed
+rather than taken from what was stored, and the object comes from an origin that has no
+access to this app's cookies.
+
+## Where AI was used
+
+This frontend was built with Claude Code. The useful part of that note is not "AI wrote it"
+but what it got wrong and how that was caught — by running it, not by reading it.
+
+The clearest example is in this repository: a `sandbox` attribute on the PDF frame looked
+like free hardening and was added on that reasoning alone. Chrome refuses to run its built-in
+PDF viewer inside a sandboxed frame, so the entire document view rendered "This page has been
+blocked by Chrome" instead. The comment on `PdfFrame` now records why the attribute is absent,
+so the same "improvement" does not get reapplied later.
+
+Agent instructions specific to this repository live in `.claude/skills/` — the React and data
+fetching rules, and the tree and access invariants the UI has to respect.
+
