@@ -12,6 +12,9 @@ point for this project. This file covers what is specific to the frontend.
 | **dataroom-web** (this one) | Next.js 16, React 19, Tailwind 4, TanStack Query |
 | [dataroom-infra](https://github.com/GrandMasterX/dataroom-infra) | Terraform |
 
+Deployed at **https://dataroom-web-rosy.vercel.app** — demo accounts and the public sample
+link are listed in the main README.
+
 ## Running it
 
 The API must be running first (see its README — one `docker compose up -d` and two commands).
