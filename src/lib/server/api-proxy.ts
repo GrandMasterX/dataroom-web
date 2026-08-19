@@ -7,7 +7,24 @@ import {
   type SessionTokens,
 } from './session-cookies';
 
-const API_URL = process.env.API_URL ?? 'http://localhost:4000';
+/**
+ * The API this proxy forwards to.
+ *
+ * The localhost fallback is development-only on purpose. On a deployed instance a missing
+ * API_URL would otherwise turn every request into a connection refused against the
+ * container's own loopback — which reads as "the API is down" and sends whoever debugs it
+ * to the wrong repository, instead of naming the one variable that is not set.
+ */
+const API_URL = resolveApiUrl();
+
+function resolveApiUrl(): string {
+  const configured = process.env.API_URL?.trim();
+  if (configured) return configured;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('API_URL is required in production — set it on the deployment.');
+  }
+  return 'http://localhost:4000';
+}
 
 /**
  * Headers forwarded to the API. An allowlist rather than a pass-through: forwarding
